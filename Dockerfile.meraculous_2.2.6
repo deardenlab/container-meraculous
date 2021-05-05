@@ -1,0 +1,53 @@
+FROM ubuntu:18.04
+
+LABEL SOFTWARE_NAME meraculous 2.2.6
+LABEL MAINTAINER "Tom Harrop"
+LABEL VERSION "meraculous 2.2.6"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LC_ALL=C
+ENV BOOST_ROOT=/usr/include/boost
+
+RUN     apt-get clean && \
+		rm -r /var/lib/apt/lists/* && \
+		apt-get update && apt-get upgrade -y --fix-missing
+
+RUN		apt-get install -y \
+            cmake \
+            g++-6 \
+            gcc-6 \
+            gnuplot \
+            language-pack-en \
+            libboost-dev \
+            libboost-filesystem-dev \
+            libboost-system-dev \
+            libboost-thread-dev \
+            libgd-dev \
+            liblog-log4perl-perl \
+            make \
+            perl \
+            wget
+
+RUN     mkdir /meraculous && \
+    	wget -O "/meraculous.tar.gz" \
+	        --no-check-certificate \
+	        https://downloads.sourceforge.net/project/meraculous20/Meraculous-v2.2.6.tar.gz &&\
+	    tar -zxf /meraculous.tar.gz \
+    	    -C /meraculous \
+        	--strip-components 1
+
+WORKDIR /meraculous/build
+
+RUN	    cmake \
+            -DCMAKE_C_COMPILER=/usr/bin/gcc-6 \
+            -DCMAKE_CXX_COMPILER=/usr/bin/g++-6 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr/local \
+            .. && \
+        make && make install
+
+WORKDIR /
+
+RUN	    rm -r /meraculous.tar.gz /meraculous
+
+ENTRYPOINT ["/usr/local/bin/run_meraculous.sh"]
